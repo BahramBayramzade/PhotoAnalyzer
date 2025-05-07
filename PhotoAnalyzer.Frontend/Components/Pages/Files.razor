@@ -1,0 +1,225 @@
+@page "/files"
+@inject FilesClient Client
+@inject IJSRuntime JsRuntime
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+<PageTitle>Files in OneDrive</PageTitle>
+
+<div class="container mt-5">
+    <h2 class="mb-4 text-center">Files in OneDrive</h2>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger mt-2" role="alert">
+            @_errorMessage
+        </div>
+    }
+
+    @if (_driveItems is null)
+    {
+        <div class="d-flex justify-content-center align-items-center" style="height: 200px;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="mb-4">
+            <div class="input-group">
+                <InputFile OnChange="@OnInputFileChange" class="form-control"/>
+                <button class="btn btn-primary" type="button" disabled="@(_selectedFile == null)"
+                        @onclick="UploadSelectedFile">
+                    Upload
+                </button>
+                <button class="btn btn-danger" type="button"
+                        disabled="@(!HasSelectedFiles())" @onclick="DeleteSelectedFiles">
+                    <i class="fas fa-trash"></i> Delete Selected
+                </button>
+            </div>
+            @if (_isUploading)
+            {
+                <span class="text-muted ml-2">Loading...</span>
+            }
+        </div>
+
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            @foreach (var file in _driveItems)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header">
+                            <input type="checkbox" @bind="file.IsSelected" class="form-check-input"/>
+                        </div>
+                        @if (FilePreviews.TryGetValue(file.Id!, out var previewUrl))
+                        {
+                            <img src="@previewUrl" class="card-img-top img-fluid" alt="Preview"
+                                 style="object-fit:cover; height:200px;">
+                        }
+                        else
+                        {
+                            <div class="d-flex align-items-center justify-content-center"
+                                 style="height:200px; background:#f8f9fa;">
+                                <span class="text-muted">[No preview available]</span>
+                            </div>
+                        }
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title text-truncate">@file.Name</h5>
+                            <div class="text-muted small mb-2">
+                                Size: @FormatFileSize(file.Size)
+                            </div>
+                            <div class="mt-auto">
+                                <button class="btn btn-danger btn-sm" @onclick="() => DeleteSingleFile(file)">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private DriveItemDto[]? _driveItems;
+    private Dictionary<string, string> FilePreviews { get; set; } = new();
+    private string? _errorMessage;
+    private bool _isUploading;
+    private IBrowserFile? _selectedFile;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFiles();
+    }
+
+    private async Task LoadFiles()
+    {
+        try
+        {
+            _driveItems = await Client.GetFilesAsync();
+            if (_driveItems is not null)
+            {
+                foreach (var file in _driveItems)
+                {
+                    if (file.Id == null) continue;
+                    var previewUrl = await Client.GetFileThumbnail(file.Id);
+                    if (previewUrl != null)
+                    {
+                        FilePreviews[file.Id] = previewUrl;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+
+    private void OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        _selectedFile = e.File;
+        _errorMessage = null;
+        StateHasChanged();
+    }
+
+    private async Task UploadSelectedFile()
+    {
+        if (_selectedFile == null) return;
+
+        try
+        {
+            _isUploading = true;
+            _errorMessage = null;
+            StateHasChanged();
+
+            await using var stream = _selectedFile.OpenReadStream(maxAllowedSize: 10485760);
+            await Client.UploadFileAsync(stream, _selectedFile.Name);
+            _selectedFile = null;
+
+            await LoadFiles();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = "Ошибка при загрузке файла: " + ex.Message;
+        }
+        finally
+        {
+            _isUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteSingleFile(DriveItemDto file)
+    {
+        if (string.IsNullOrEmpty(file.Id)) return;
+
+        try
+        {
+            var fileSize = FormatFileSize(file.Size);
+            if (!await JsRuntime.InvokeAsync<bool>("confirm",
+                    $"Delete file '{file.Name}' ({fileSize})?"))
+                return;
+
+            await Client.DeleteFile(file.Id);
+            await LoadFiles();
+            _errorMessage = null;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error deleting file: {ex.Message}";
+        }
+    }
+
+    private async Task DeleteSelectedFiles()
+    {
+        if (_driveItems == null) return;
+
+        var selectedFiles = _driveItems.Where(f => f.IsSelected).ToList();
+        if (!selectedFiles.Any()) return;
+
+        var totalSize = selectedFiles.Sum(f => f.Size);
+        var fileSizeInfo = FormatFileSize(totalSize);
+
+        if (!await JsRuntime.InvokeAsync<bool>("confirm",
+                $"Delete {selectedFiles.Count} selected files (total size: {fileSizeInfo})?"))
+            return;
+
+        try
+        {
+            var deleteTasks = selectedFiles
+                .Where(f => !string.IsNullOrEmpty(f.Id))
+                .Select(f => Client.DeleteFile(f.Id!));
+
+            await Task.WhenAll(deleteTasks);
+            await LoadFiles();
+            _errorMessage = null;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error deleting files: {ex.Message}";
+        }
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        string[] sizes = ["B", "KB", "MB", "GB", "TB"];
+        var order = 0;
+        double len = bytes;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len /= 1024;
+        }
+
+        return $"{len:0.##} {sizes[order]}";
+    }
+
+    private bool HasSelectedFiles()
+    {
+        return _driveItems?.Any(f => f.IsSelected) ?? false;
+    }
+
+}

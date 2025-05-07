@@ -1,0 +1,21 @@
+﻿<AuthorizeView>
+    <Authorized>
+        <div class="dropdown">
+            <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                @context.User.Identity?.Name
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="/profile">Profile</a></li>
+                <li>
+                    <form method="post" action="authentication/logout">
+                        <AntiforgeryToken />
+                        <button type="submit" class="dropdown-item">Log out</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <a href="authentication/login" class="btn btn-warning">Login</a>
+    </NotAuthorized>
+</AuthorizeView>

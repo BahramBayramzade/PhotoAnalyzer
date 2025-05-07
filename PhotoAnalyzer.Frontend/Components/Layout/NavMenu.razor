@@ -1,0 +1,26 @@
+﻿<AuthorizeView>
+  <Authorized>
+    <nav class="navbar bg-body-tertiary" data-bs-theme="dark">
+      <div class="container">
+        <a class="navbar-brand" href="/files">
+          Photo Analyzer
+        </a>
+      <div class="d-flex">
+        <LoginDisplay/>
+      </div>
+      </div>
+    </nav>
+  </Authorized>
+  <NotAuthorized>
+    <nav class="navbar bg-body-tertiary" data-bs-theme="dark">
+      <div class="container">
+        <a class="navbar-brand">
+          Photo Analyzer
+        </a>
+      <div class="d-flex">
+        <LoginDisplay/>
+      </div>
+      </div>
+    </nav>
+  </NotAuthorized>
+</AuthorizeView>
