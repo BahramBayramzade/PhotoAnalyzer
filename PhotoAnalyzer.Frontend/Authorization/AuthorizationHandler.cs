@@ -1,4 +1,3 @@
-
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Authentication;
 
@@ -11,13 +10,16 @@ public class AuthorizationHandler(IHttpContextAccessor httpContextAccessor)
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
-        // 1. Extract access token from httpcontext
-        var httpcontext = httpContextAccessor.HttpContext ??
-                throw new InvalidOperationException("No HttpContext available!");
+        var httpContext = httpContextAccessor.HttpContext ??
+                          throw new InvalidOperationException("No HttpContext available!");
 
-        var accessToken = await httpcontext.GetTokenAsync("access_token");
+        var accessToken = await httpContext.GetTokenAsync("access_token");
 
-        // 2. Attach token to outgoing request
+        // Логирование токена для отладки
+        Console.WriteLine(string.IsNullOrEmpty(accessToken)
+            ? "Access token is empty!"
+            : $"Access token: {accessToken}");
+
         if (!string.IsNullOrEmpty(accessToken))
         {
             request.Headers.Authorization = new AuthenticationHeaderValue(
