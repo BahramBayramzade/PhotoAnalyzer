@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
+using Microsoft.IdentityModel.Tokens;
 
 namespace PhotoAnalyzer.API.Extensions;
 
@@ -6,37 +8,28 @@ public static class GraphClientExtensions
 {
     public static void AddMicrosoftGraph(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddMicrosoftIdentityWebApiAuthentication(configuration)
+        services.AddMicrosoftIdentityWebApiAuthentication(configuration,
+                subscribeToJwtBearerMiddlewareDiagnosticsEvents: true)
             .EnableTokenAcquisitionToCallDownstreamApi()
             .AddMicrosoftGraph(configuration.GetSection("DownstreamApi"))
             .AddInMemoryTokenCaches();
-    }
 
-    // public static void AddMicrosoftGraph(this IServiceCollection services, IConfiguration configuration)
-    // {
-    //     // Get the scopes from configuration
-    //     List<string> scopes = new();
-    //     // scopes.Add("https://graph.microsoft.com/.default");
-    //     // scopes.Add("Files.ReadWrite");
-    //     // scopes.Add("Files.ReadWrite.All");
-    //     // scopes.Add("Files.Read");
-    //     // scopes.Add("Files.Read.All");
-    //     scopes.Add("User.Read");
-    //
-    //     services.AddMicrosoftIdentityWebApiAuthentication(configuration)
-    //         .EnableTokenAcquisitionToCallDownstreamApi(options =>
-    //         {
-    //             // If you need to configure any ConfidentialClientApplicationOptions, do it here
-    //             // For example:
-    //             options.Instance = configuration["AzureAd:Instance"];
-    //             options.TenantId = configuration["AzureAd:TenantId"];
-    //             options.ClientId = configuration["AzureAd:ClientId"];
-    //             options.ClientSecret = configuration["AzureAd:ClientSecret"];
-    //         })
-    //         .AddMicrosoftGraph(configuration.GetSection("DownstreamApi"))
-    //         .AddInMemoryTokenCaches();
-    //
-    //     // Add the scopes to the downstream API configuration
-    //     services.Configure<MicrosoftGraphOptions>(options => { options.Scopes = string.Join(" ", scopes); });
-    // }
+        services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+        {
+            options.TokenValidationParameters.ValidIssuers =
+            [
+                "https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0", // MSA issuer
+                $"https://login.microsoftonline.com/{configuration["AzureAd:TenantId"]}/v2.0" // Your org issuer
+            ];
+
+            // For multi-tenant apps
+            options.TokenValidationParameters.IssuerValidator = (issuer, token, parameters) =>
+            {
+                if (issuer.StartsWith("https://login.microsoftonline.com/"))
+                    return issuer;
+
+                throw new SecurityTokenInvalidIssuerException("Invalid issuer");
+            };
+        });
+    }
 }
