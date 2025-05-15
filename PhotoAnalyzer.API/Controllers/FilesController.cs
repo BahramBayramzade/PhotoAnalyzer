@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Graph;
 using Microsoft.Identity.Client;
+using Microsoft.Identity.Web.Resource;
 using PhotoAnalyzer.API.DTOs;
 using PhotoAnalyzer.API.Graph;
 
@@ -11,6 +12,7 @@ namespace PhotoAnalyzer.API.Controllers;
 [Authorize]
 [Route("api/[controller]")] // api/files
 [ApiController]
+[RequiredScope("access_as_user")]
 public class FilesController : ControllerBase
 {
     private readonly IGraphFilesClient _graphFilesClient;

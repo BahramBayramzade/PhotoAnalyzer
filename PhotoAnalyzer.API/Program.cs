@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Identity.Web;
+using Microsoft.IdentityModel.Logging;
 using PhotoAnalyzer.API.Extensions;
 using PhotoAnalyzer.API.Graph;
 
@@ -9,13 +10,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddMicrosoftGraph(builder.Configuration);
 
 // builder.Services.AddAuthentication()
-//     .AddJwtBearer(options =>
+//     .AddMicrosoftAccount(o =>
 //     {
-//         options.Authority = "https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0";
-//         options.Audience = "fb3fa063-9763-4c52-a520-92011f25aa09";
+//         o.ClientId = "fb3fa063-9763-4c52-a520-92011f25aa09";
+//         o.ClientSecret = "tiW8Q~TrJKAmx8XCT68vDoXYiWSulfAjv5dFWcMM";
+//         // For PersonalMicrosoftAccount, it has different endpoint
+//         o.TokenEndpoint = "https://login.microsoftonline.com/consumers/oauth2/v2.0/token";
+//         o.AuthorizationEndpoint = "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize";
 //     });
-//
-// builder.Services.AddAuthorizationBuilder();
+
+builder.Services.AddAuthorizationBuilder();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -30,12 +34,17 @@ builder.Services.Configure<FormOptions>(options =>
 
 var app = builder.Build();
 
+if (app.Environment.IsDevelopment())
+{
+    IdentityModelEventSource.ShowPII = true;
+}
+
 // Configure the HTTP request pipeline.
 app.UseHttpsRedirection();
 
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

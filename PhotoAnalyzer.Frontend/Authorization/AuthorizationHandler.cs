@@ -3,14 +3,20 @@ using Microsoft.AspNetCore.Authentication;
 
 namespace PhotoAnalyzer.Frontend.Authorization;
 
-public class AuthorizationHandler(IHttpContextAccessor httpContextAccessor)
-    : DelegatingHandler
+public class AuthorizationHandler : DelegatingHandler
 {
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public AuthorizationHandler(IHttpContextAccessor httpContextAccessor)
+    {
+        _httpContextAccessor = httpContextAccessor;
+    }
+
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
-        var httpContext = httpContextAccessor.HttpContext ??
+        var httpContext = _httpContextAccessor.HttpContext ??
                           throw new InvalidOperationException("No HttpContext available!");
 
         var accessToken = await httpContext.GetTokenAsync("access_token");
