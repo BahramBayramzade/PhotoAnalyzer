@@ -12,7 +12,7 @@ namespace PhotoAnalyzer.API.Controllers;
 [Authorize]
 [Route("api/[controller]")] // api/files
 [ApiController]
-[RequiredScope("access_as_user")]
+[RequiredScope("Files.Read", "Files.Read.All", "Files.ReadWrite", "Files.ReadWrite.All")]
 public class FilesController : ControllerBase
 {
     private readonly IGraphFilesClient _graphFilesClient;
@@ -44,7 +44,7 @@ public class FilesController : ControllerBase
         {
             Console.WriteLine($"Exception: {ex.Message}");
             _logger.LogError("Error retrieving files: {ExMessage}", ex.Message);
-            return StatusCode((int)HttpStatusCode.InternalServerError, "Произошла ошибка при получении файлов");
+            return StatusCode((int)HttpStatusCode.InternalServerError, "Error retrieving files");
         }
     }
 

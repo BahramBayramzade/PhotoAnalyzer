@@ -7,7 +7,13 @@ using PhotoAnalyzer.API.Graph;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddMicrosoftGraph(builder.Configuration);
+// builder.Services.AddMicrosoftGraph(builder.Configuration);
+
+builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration, "AzureAd")
+    .EnableTokenAcquisitionToCallDownstreamApi()
+    .AddMicrosoftGraph(builder.Configuration.GetSection("DownstreamApi"))
+    .AddInMemoryTokenCaches();
+
 
 // builder.Services.AddAuthentication()
 //     .AddMicrosoftAccount(o =>
