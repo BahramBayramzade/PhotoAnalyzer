@@ -2,8 +2,7 @@ using System.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Graph;
-using Microsoft.Identity.Client;
-using Microsoft.Identity.Web.Resource;
+using Microsoft.Identity.Web;
 using PhotoAnalyzer.API.DTOs;
 using PhotoAnalyzer.API.Graph;
 
@@ -12,7 +11,6 @@ namespace PhotoAnalyzer.API.Controllers;
 [Authorize]
 [Route("api/[controller]")] // api/files
 [ApiController]
-[RequiredScope("Files.Read", "Files.Read.All", "Files.ReadWrite", "Files.ReadWrite.All")]
 public class FilesController : ControllerBase
 {
     private readonly IGraphFilesClient _graphFilesClient;
@@ -25,26 +23,27 @@ public class FilesController : ControllerBase
         _logger = logger;
     }
 
-    [HttpGet("get-files")] // api/files/get-files?pageNumber=1&pageSize=10
-    public async Task<ActionResult<IEnumerable<DriveItem>>> GetFiles(int pageNumber = 1, int pageSize = 10)
+    [HttpGet("get-files")]
+    public async Task<ActionResult<IEnumerable<DriveItem>>> GetFiles()
     {
         try
         {
-            var driveItems = await _graphFilesClient.GetDriveItemsAsync(pageNumber, pageSize);
-            var driveItemsDto = driveItems.Select(MapToDto).ToList();
-            return Ok(driveItemsDto);
+            var driveItems = await _graphFilesClient.GetDriveItemsAsync();
+            var items = driveItems
+                .Where(item => item.File != null && item.File.MimeType.StartsWith("image/"))
+                .ToList();
+
+            return Ok(items);
         }
-        catch (MsalUiRequiredException ex)
+        catch (MicrosoftIdentityWebChallengeUserException ex)
         {
-            Console.WriteLine($"MsalUiRequiredException: {ex.Message}");
-            _logger.LogError(ex, "MsalUiRequiredException");
-            return StatusCode((int)HttpStatusCode.Unauthorized, "Not authorized");
+            _logger.LogError("Consent required: {ExMessage}", ex.Message);
+            return StatusCode((int)HttpStatusCode.Forbidden, "Consent required. Please re-authenticate.");
         }
-        catch (Exception ex)
+        catch (ServiceException ex)
         {
-            Console.WriteLine($"Exception: {ex.Message}");
-            _logger.LogError("Error retrieving files: {ExMessage}", ex.Message);
-            return StatusCode((int)HttpStatusCode.InternalServerError, "Error retrieving files");
+            _logger.LogError("Graph API error: {ExMessage}", ex.Message);
+            return StatusCode((int)HttpStatusCode.InternalServerError, "Error retrieving files.");
         }
     }
 

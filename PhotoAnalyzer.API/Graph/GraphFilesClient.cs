@@ -13,7 +13,7 @@ public class GraphFilesClient : IGraphFilesClient
         _logger = logger;
     }
 
-    public async Task<List<DriveItem>> GetDriveItemsAsync(int pageNumber, int pageSize)
+    public async Task<List<DriveItem>> GetDriveItemsAsync()
     {
         try
         {
