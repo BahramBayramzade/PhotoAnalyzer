@@ -5,10 +5,20 @@ namespace PhotoAnalyzer.Frontend.Clients;
 
 public class FilesClient(HttpClient httpClient)
 {
-    public async Task<DriveItemDto[]> GetFilesAsync(int? pageNumber = 1, int? pageSize = 10) // blazor app.
+    public async Task<DriveItemDto[]> GetFilesAsync() // blazor app.
     {
-        var response = await httpClient.GetAsync($"api/Files/get-files?pageNumber={pageNumber}&pageSize={pageSize}");
-        response.EnsureSuccessStatusCode();
+        // var response = await httpClient.GetAsync("api/Files/get-files");
+        // response.EnsureSuccessStatusCode();
+        // return await response.Content.ReadFromJsonAsync<DriveItemDto[]>() ?? [];
+
+        var response = await httpClient.GetAsync("api/Files/get-files");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException(
+                $"Ошибка при получении файлов: {(int)response.StatusCode} {response.ReasonPhrase}");
+        }
+
         return await response.Content.ReadFromJsonAsync<DriveItemDto[]>() ?? [];
     }
 

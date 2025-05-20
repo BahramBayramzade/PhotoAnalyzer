@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,8 @@ builder.Services
     .AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
     {
+        // options.Authority = "https://login.microsoftonline.com/common/v2.0";
+        // options.Authority = "https://login.microsoftonline.com/consumers/v2.0";
         options.Authority = "https://login.microsoftonline.com/d8286ac9-5463-4f4c-ade0-c3d6c1bb06c8/v2.0";
         options.ClientId = "b695c8ec-ea62-4b97-ab4d-e17b6f78369c";
         options.ClientSecret = "r3y8Q~~R6DMKP-JL53dy9fYkOKLlYtehGywIAbaD";
@@ -35,6 +38,7 @@ builder.Services
         options.ResponseType = OpenIdConnectResponseType.Code;
         options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         options.SaveTokens = true;
+        options.TokenValidationParameters.ValidateIssuer = false;
         options.TokenValidationParameters.NameClaimType = JwtRegisteredClaimNames.Name;
     })
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme);

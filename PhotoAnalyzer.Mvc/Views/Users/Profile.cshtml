@@ -1,0 +1,110 @@
+@model Microsoft.Graph.User
+@{
+    ViewData["Title"] = "User Profile";
+}
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    @if (ViewBag.PhotoBase64 != null)
+                    {
+                        <img src="data:image/jpeg;base64,@ViewBag.PhotoBase64"
+                             alt="Profile Photo" class="rounded-circle img-fluid" style="width: 150px;">
+                    }
+                    else
+                    {
+                        <img src="@Url.Action("Photo", "Users")"
+                             alt="Default Profile" class="rounded-circle img-fluid" style="width: 150px;">
+                    }
+                    <h5 class="my-3">@Model.DisplayName</h5>
+                    <p class="text-muted mb-1">@Model.JobTitle</p>
+                    <p class="text-muted mb-4">@Model.OfficeLocation</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <p class="mb-0">Full Name</p>
+                        </div>
+                        <div class="col-sm-9">
+                            <p class="text-muted mb-0">@Model.GivenName @Model.Surname</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <p class="mb-0">Email</p>
+                        </div>
+                        <div class="col-sm-9">
+                            <p class="text-muted mb-0">@Model.Mail</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <p class="mb-0">Username</p>
+                        </div>
+                        <div class="col-sm-9">
+                            <p class="text-muted mb-0">@Model.UserPrincipalName</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <p class="mb-0">Mobile</p>
+                        </div>
+                        <div class="col-sm-9">
+                            <p class="text-muted mb-0">@(Model.MobilePhone ?? "Not specified")</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <p class="mb-0">Business Phone</p>
+                        </div>
+                        <div class="col-sm-9">
+                            <p class="text-muted mb-0">
+                                @(Model.BusinessPhones?.FirstOrDefault() ?? "Not specified")
+                            </p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <p class="mb-0">Language</p>
+                        </div>
+                        <div class="col-sm-9">
+                            <p class="text-muted mb-0">@Model.PreferredLanguage</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        border: none;
+        border-radius: 10px;
+    }
+
+    .card-body {
+        padding: 2rem;
+    }
+
+    hr {
+        margin: 0.5rem 0;
+    }
+
+    .rounded-circle {
+        border: 5px solid #f8f9fa;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+</style>

@@ -24,11 +24,11 @@ public class FilesController : ControllerBase
     }
 
     [HttpGet("get-files")] // api/files/get-files?pageNumber=1&pageSize=10
-    public async Task<ActionResult<IEnumerable<DriveItem>>> GetFiles(int pageNumber = 1, int pageSize = 10)
+    public async Task<ActionResult<IEnumerable<DriveItem>>> GetFiles()
     {
         try
         {
-            var driveItems = await _graphFilesClient.GetDriveItemsAsync(pageNumber, pageSize);
+            var driveItems = await _graphFilesClient.GetDriveItemsAsync();
             var driveItemsDto = driveItems.Select(MapToDto).ToList();
             return Ok(driveItemsDto);
         }

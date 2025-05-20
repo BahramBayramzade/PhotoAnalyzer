@@ -1,0 +1,75 @@
+﻿@{
+    ViewData["Title"] = "Photo Viewer";
+}
+
+<div class="hero-section">
+    <div class="container text-center py-5">
+        <h1 class="display-4">Welcome to Photo Viewer</h1>
+        <p class="lead">View and manage your OneDrive photos with ease</p>
+
+        @if (User.Identity.IsAuthenticated)
+        {
+            <a asp-action="Photos" class="btn btn-primary btn-lg mt-3">
+                View Your Photos
+            </a>
+        }
+        else
+        {
+            <a asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignIn"
+               class="btn btn-primary btn-lg mt-3">
+                Sign In with Microsoft
+            </a>
+        }
+    </div>
+</div>
+
+<div class="container features-section py-5">
+    <div class="row">
+        <div class="col-md-4 text-center">
+            <div class="feature-icon mb-3">
+                <i class="bi bi-cloud-arrow-up"></i>
+            </div>
+            <h3>Upload Photos</h3>
+            <p>Easily upload your photos to OneDrive directly from the app.</p>
+        </div>
+        <div class="col-md-4 text-center">
+            <div class="feature-icon mb-3">
+                <i class="bi bi-collection"></i>
+            </div>
+            <h3>Organize</h3>
+            <p>View and manage your photo collection in a beautiful gallery.</p>
+        </div>
+        <div class="col-md-4 text-center">
+            <div class="feature-icon mb-3">
+                <i class="bi bi-share"></i>
+            </div>
+            <h3>Secure</h3>
+            <p>Your photos are securely stored in your personal OneDrive account.</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #6e8efb, #a777e3);
+        color: white;
+        border-radius: 0 0 20px 20px;
+        margin-bottom: 40px;
+    }
+
+    .feature-icon {
+        font-size: 2.5rem;
+        color: #6e8efb;
+    }
+
+    .btn-primary {
+        background-color: #6e8efb;
+        border-color: #6e8efb;
+        padding: 10px 30px;
+    }
+
+    .btn-primary:hover {
+        background-color: #5a7df4;
+        border-color: #5a7df4;
+    }
+</style>

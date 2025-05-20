@@ -1,0 +1,146 @@
+@model List<Microsoft.Graph.DriveItem>
+@{
+    ViewData["Title"] = "My OneDrive Photos";
+}
+
+<div class="container py-4">
+    <h2 class="mb-4">@ViewData["Title"]</h2>
+
+    <!-- Форма загрузки файла -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <form asp-action="Upload" asp-controller="Home" method="post" enctype="multipart/form-data" class="d-flex align-items-center flex-grow-1 me-3">
+                    <input type="file" name="file" accept="image/*" class="form-control" style="max-width: 300px;" required/>
+                    <button type="submit" class="btn btn-primary ms-2">
+                        <i class="bi bi-cloud-arrow-up"></i> Upload Photo
+                    </button>
+                </form>
+
+                <form id="deleteSelectedForm" asp-action="DeleteMultiple" asp-controller="Home" method="post" class="d-none">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ids" id="selectedIds"/>
+                    <button type="submit" class="btn btn-danger" disabled id="deleteSelectedBtn">
+                        <i class="bi bi-trash"></i> Delete Selected
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            @foreach (var item in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 photo-card">
+                        <div class="position-relative">
+                            <div class="form-check position-absolute top-0 start-0 m-2">
+                                <input class="form-check-input photo-checkbox" type="checkbox" value="@item.Id" style="width: 1.2em; height: 1.2em;">
+                            </div>
+                            <img src="@Url.Action("Thumbnail", "Home", new { id = item.Id })"
+                                 class="card-img-top" alt="@item.Name" style="object-fit: cover; height: 200px;"/>
+                            <div class="position-absolute top-0 end-0 m-2 d-flex flex-column gap-1">
+                                <form asp-action="Delete" asp-controller="Home" method="post" asp-route-id="@item.Id">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="_method" value="DELETE"/>
+                                    <button type="submit" class="btn btn-danger btn-sm rounded-circle">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                <div class="badge bg-dark text-white">
+                                    @(item.Size.HasValue ? FormatFileSize(item.Size.Value) : "N/A")
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text text-truncate">@item.Name</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            No photos found in your OneDrive. Upload some photos to get started!
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('.photo-checkbox');
+            const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+            const deleteSelectedForm = document.getElementById('deleteSelectedForm');
+            const selectedIdsInput = document.getElementById('selectedIds');
+
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateDeleteButton);
+            });
+
+            function updateDeleteButton() {
+                const checkedBoxes = Array.from(checkboxes).filter(cb => cb.checked);
+                deleteSelectedBtn.disabled = checkedBoxes.length === 0;
+
+                if (checkedBoxes.length > 0) {
+                    deleteSelectedForm.classList.remove('d-none');
+                    selectedIdsInput.value = checkedBoxes.map(cb => cb.value).join(',');
+                } else {
+                    deleteSelectedForm.classList.add('d-none');
+                }
+            }
+
+            deleteSelectedForm.addEventListener('submit', function(e) {
+                if (deleteSelectedBtn.disabled) {
+                    e.preventDefault();
+                } else if (!confirm(`Are you sure you want to delete ${selectedIdsInput.value.split(',').length} selected photos?`)) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+}
+
+@functions {
+    string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        int order = 0;
+        while (bytes >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            bytes /= 1024;
+        }
+        return $"{bytes:0.##} {sizes[order]}";
+    }
+}
+
+<style>
+    .photo-card {
+        transition: transform 0.2s;
+    }
+
+    .photo-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .photo-checkbox {
+        cursor: pointer;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+    }
+
+    .photo-checkbox:hover {
+        opacity: 1;
+    }
+</style>

@@ -11,11 +11,11 @@ public class AuthorizationHandler(IHttpContextAccessor httpContextAccessor)
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
-        // 1. Extract access token from httpcontext
-        var httpcontext = httpContextAccessor.HttpContext ??
+        // 1. Extract access token from http context
+        var httpContext = httpContextAccessor.HttpContext ??
                 throw new InvalidOperationException("No HttpContext available!");
 
-        var accessToken = await httpcontext.GetTokenAsync("access_token");
+        var accessToken = await httpContext.GetTokenAsync("access_token");
 
         // 2. Attach token to outgoing request
         if (!string.IsNullOrEmpty(accessToken))
